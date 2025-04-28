@@ -1,0 +1,10 @@
+# .gitignore - Only track .c, .h, .s files
+
+# Ignore everything
+*
+
+# But not these extensions!
+!*.c
+!*.h
+!*.s
+!.gitignore
