@@ -1,25 +1,17 @@
-// The Nucleo Team - ENGR 478 - Spring 2025
-// main.c - Test program to read tilt angle from MPU6050
-
+// main.c - Entry point for motor test using TIM2 and GPIO direction
 #include "stm32l476xx.h"
-#include "i2c.h"
-#include "imu.h"
-#include "systick_timer.h"
+#include "motor.h"
 
 int main(void)
 {
-    SysTick_Init(4000);
-    initLED();
-    initI2C1();
-    initIMU();
-    calibrateGyro();
+    // Initialize system and motors
+    initMotors();
 
-    while (1)
-    {
-        volatile float tilt = getTiltAngle();
+    // Run predefined motor movement test sequence
+    motorTest();
 
-        volatile int i;
-        for (i = 0; i < 1000; i++)
-            ;
+    // Loop forever
+    while (1) {
+        // Optional: insert user behavior or idle state
     }
 }
