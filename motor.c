@@ -131,3 +131,28 @@ void motorTest(void)
         ;
     forward(0);
 }
+
+void testMotor1Forward(void)
+{
+    GPIOB->ODR |= (1 << 4);  // IN1 = PB4 = 1
+    GPIOB->ODR &= ~(1 << 5); // IN2 = PB5 = 0
+    TIM2->CCR3 = 1000;       // Full speed on PB10
+    volatile int i;
+    for (i = 0; i < 1200000; i++)
+        ; // ~3 sec delay
+    TIM2->CCR3 = 0;
+    GPIOB->ODR &= ~((1 << 4) | (1 << 5)); // Stop
+}
+
+void testMotor2Forward(void)
+{
+    GPIOA->ODR |= (1 << 4);  // IN3 = PA4 = 1
+    GPIOB->ODR &= ~(1 << 0); // IN4 = PB0 = 0
+    TIM2->CCR2 = 1000;       // Full speed on PA1
+    volatile int i;
+    for (i = 0; i < 1200000; i++)
+        ; // ~3 sec delay
+    TIM2->CCR2 = 0;
+    GPIOA->ODR &= ~(1 << 4);
+    GPIOB->ODR &= ~(1 << 0); // Stop
+}
