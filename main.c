@@ -10,6 +10,7 @@ int main(void)
     initLED();          // LED for activity feedback
     initI2C1();         // Setup I2C1 on PB8/PB9
     SysTick_Init(4000); // 1ms system tick for 4MHz core
+		
     testIMU();          // Start IMU read loop
 
     // Should never reach here
