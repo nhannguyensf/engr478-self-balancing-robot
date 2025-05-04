@@ -30,3 +30,10 @@ void SysTick_Handler(void)
 {
     msTicks++; // Increment 1 every interrupt
 }
+
+void delay(uint32_t T)
+{
+    volatile uint32_t i;
+    for (i = 0; i < T * 4000; i++)
+        ; // crude delay for 4MHz
+}
