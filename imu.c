@@ -1,6 +1,7 @@
 // imu.c - MPU6050 IMU driver (register-level I2C)
 #include "imu.h"
 #include "i2c.h"
+#include "led.h"
 #include "stm32l476xx.h"
 
 #define MPU6050_ADDR (0x68 << 1)
@@ -20,8 +21,11 @@ float Gx, Gy, Gz;
 
 void initIMU(void)
 {
-    // Wake up MPU6050 by writing 0x00 to PWR_MGMT_1 register
-    I2C_Write((0x68 << 1), 0x6B, 0x00);
+    I2C_Write(MPU6050_ADDR, PWR_MGMT_1, 0x00);       // Wake up
+    I2C_Write(MPU6050_ADDR, SMPLRT_DIV, 0x07);       // Sample rate: 1 kHz
+    I2C_Write(MPU6050_ADDR, CONFIG_REG, 0x00);       // No DLPF
+    I2C_Write(MPU6050_ADDR, GYRO_CONFIG_REG, 0x00);  // ±250 dps
+    I2C_Write(MPU6050_ADDR, ACCEL_CONFIG_REG, 0x00); // ±2g
 }
 
 void readAccelRaw(void)
@@ -46,4 +50,21 @@ void readGyroRaw(void)
     Gx = Gyro_X_RAW / 131.0f;
     Gy = Gyro_Y_RAW / 131.0f;
     Gz = Gyro_Z_RAW / 131.0f;
+}
+
+void testIMU(void)
+{
+    initIMU();
+    initLED();
+    while (1)
+    {
+        readAccelRaw();
+        readGyroRaw();
+
+        // Blink LED to indicate active reading
+        toggleLED();
+        volatile int d;
+        for (d = 0; d < 200000; d++)
+            ; // crude delay between reads
+    }
 }

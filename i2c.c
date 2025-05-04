@@ -70,7 +70,7 @@ uint8_t I2C_Read(uint8_t addr, uint8_t reg)
         goto i2c_error;
 
     // STEP 2: Read data
-    I2C1->CR2 = (addr | 0x01) | (1 << 16); // read, 1 byte
+    I2C1->CR2 = (addr & 0xFE) | (1 << 16) | I2C_CR2_RD_WRN;
     I2C1->CR2 |= I2C_CR2_START;
 
     timeout = 10000;
