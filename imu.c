@@ -60,21 +60,13 @@ void readIMU_AllRaw(void)
     imu_data.gyro_y_raw = (int16_t)(buffer[8] << 8 | buffer[9]);
     imu_data.gyro_z_raw = (int16_t)(buffer[10] << 8 | buffer[11]);
 
-    // imu_data.acc_x = imu_data.acc_x_raw / 16384.0f;
-    // imu_data.acc_y = imu_data.acc_y_raw / 16384.0f;
-    // imu_data.acc_z = imu_data.acc_z_raw / 16384.0f;
+    imu_data.acc_x = imu_data.acc_x_raw / 16384.0f;
+    imu_data.acc_y = imu_data.acc_y_raw / 16384.0f;
+    imu_data.acc_z = imu_data.acc_z_raw / 16384.0f;
 
-    // imu_data.gyro_x = imu_data.gyro_x_raw / 131.0f;
-    // imu_data.gyro_y = imu_data.gyro_y_raw / 131.0f;
-    // imu_data.gyro_z = imu_data.gyro_z_raw / 131.0f;
-
-    imu_data.acc_x = imu_data.acc_x_raw / 1.0f;
-    imu_data.acc_y = imu_data.acc_y_raw / 1.0f;
-    imu_data.acc_z = imu_data.acc_z_raw / 1.0f;
-
-    imu_data.gyro_x = imu_data.gyro_x_raw / 1.0f;
-    imu_data.gyro_y = imu_data.gyro_y_raw / 1.0f;
-    imu_data.gyro_z = imu_data.gyro_z_raw / 1.0f;
+    imu_data.gyro_x = imu_data.gyro_x_raw / 131.0f;
+    imu_data.gyro_y = imu_data.gyro_y_raw / 131.0f;
+    imu_data.gyro_z = imu_data.gyro_z_raw / 131.0f;
 }
 
 void testIMU(void)
