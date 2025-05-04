@@ -1,22 +1,36 @@
-// main.c - Entry point for motor test using TIM2 and GPIO direction
+// main.c - IMU test application
 #include "stm32l476xx.h"
-#include "motor.h"
+#include "i2c.h"
+#include "imu.h"
+#include "systick_timer.h"
+#include "led.h"
 
 int main(void)
 {
-    // Initialize system and motors
-    initMotors();
+    volatile float ax, ay, az, gx, gy, gz;
 
-    // Run predefined motor movement test sequence
-    motorTest();
-    
-    // Run independent motor tests
-    // testMotor1Forward();
-    // testMotor2Forward();
+    initLED();          // Optional: Blink LED for activity
+    initI2C1();         // Setup I2C1 (PB8=SCL, PB9=SDA)
+    SysTick_Init(4000); // 1ms tick for 4MHz system clock
+    initIMU();          // Wake up MPU6050
+    test_I2C_MPU6050();
 
-    // Loop forever
     while (1)
     {
-        // Optional: insert user behavior or idle state
+        readAccelRaw(); // Update Ax, Ay, Az
+        readGyroRaw();  // Update Gx, Gy, Gz
+
+        // Assign to local variables for debugging
+        ax = Ax;
+        ay = Ay;
+        az = Az;
+        gx = Gx;
+        gy = Gy;
+        gz = Gz;
+
+        toggleLED(); // Blink activity LED
+        volatile int i;
+        for (i = 0; i < 50000; i++)
+            ;
     }
 }
