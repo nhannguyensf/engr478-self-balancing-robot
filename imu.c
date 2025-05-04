@@ -1,68 +1,120 @@
-// imu.c - MPU6050 full sensor driver and tilt angle computation using msTicks
-#include "stm32l476xx.h"
+// imu.c - MPU6050 IMU driver (register-level I2C)
 #include "imu.h"
 #include "i2c.h"
-#include "systick_timer.h"
-#include <math.h>
 #include "led.h"
+#include "stm32l476xx.h"
 
-#define MPU6050_ADDR 0x68
+#define MPU6050_ADDR (0x68 << 1)
+#define WHO_AM_I_REG 0x75
 #define PWR_MGMT_1 0x6B
+#define SMPLRT_DIV 0x19
+#define CONFIG_REG 0x1A
+#define GYRO_CONFIG_REG 0x1B
+#define ACCEL_CONFIG_REG 0x1C
 #define ACCEL_XOUT_H 0x3B
 #define GYRO_XOUT_H 0x43
 
-static float angle = 0.0f;
-static float gyroBias = 0.0f;
-
-extern volatile uint32_t msTicks; // Use global msTicks for timekeeping
+int16_t Accel_X_RAW, Accel_Y_RAW, Accel_Z_RAW;
+int16_t Gyro_X_RAW, Gyro_Y_RAW, Gyro_Z_RAW;
+float Ax, Ay, Az;
+float Gx, Gy, Gz;
 
 void initIMU(void)
 {
-    I2C_Write(MPU6050_ADDR << 1, PWR_MGMT_1, 0x00); // Wake up MPU6050
-}
+    volatile int i;
 
-static int16_t readWord(uint8_t reg)
-{
-    uint8_t high = I2C_Read(MPU6050_ADDR << 1, reg);
-    uint8_t low = I2C_Read(MPU6050_ADDR << 1, reg + 1);
-    return (int16_t)(high << 8 | low);
-}
+    // Initial delay after power-up (~50ms @ 4MHz)
+    // for (i = 0; i < 200000; i++)
+    //     ;
 
-void calibrateGyro(void)
-{
-    int32_t sum = 0;
-    int i;
-    for (i = 0; i < 100; i++)  // Faster 100 samples
+    // Try to wake up MPU6050
+    I2C_Write(MPU6050_ADDR, PWR_MGMT_1, 0x00);
+
+    // Wait a bit for sensor to settle (~25ms)
+    for (i = 0; i < 200000; i++)
+        ;
+
+    // Verify the wake-up
+    uint8_t pwr = I2C_Read(MPU6050_ADDR, PWR_MGMT_1);
+    if (pwr & 0x40) // If SLEEP bit is still set
     {
-        sum += readWord(GYRO_XOUT_H);
+        // Retry one more time
+        I2C_Write(MPU6050_ADDR, PWR_MGMT_1, 0x00);
+        for (i = 0; i < 100000; i++)
+            ;
 
-        if (i % 10 == 0) {
-            toggleLED(); // Blink LED every 10 samples
+        pwr = I2C_Read(MPU6050_ADDR, PWR_MGMT_1);
+        if (pwr & 0x40)
+        {
+            while (1)
+            {
+                toggleLED(); // indicate failure
+                for (i = 0; i < 100000; i++)
+                    ;
+            }
         }
     }
-    gyroBias = sum / 100.0f;
 
-    offLED(); // Turn off LED after done
+    // If wake successful, configure sensor
+    I2C_Write(MPU6050_ADDR, SMPLRT_DIV, 0x07);
+    I2C_Write(MPU6050_ADDR, CONFIG_REG, 0x00);
+    I2C_Write(MPU6050_ADDR, GYRO_CONFIG_REG, 0x00);
+    I2C_Write(MPU6050_ADDR, ACCEL_CONFIG_REG, 0x00);
 }
 
-
-
-float getTiltAngle(void)
+void readAccelRaw(void)
 {
-    static uint32_t lastTicks = 0;
-    uint32_t now = msTicks;
-    float dt = (now - lastTicks) * 1.0f; // 1 tick = 1 second based on 4MHz
-    lastTicks = now;
+    uint8_t data[6];
+    I2C_ReadBurst(MPU6050_ADDR, ACCEL_XOUT_H, data, 6);
 
-    int16_t ax_raw = readWord(ACCEL_XOUT_H);
-    int16_t az_raw = readWord(ACCEL_XOUT_H + 4);
-    int16_t gx_raw = readWord(GYRO_XOUT_H);
+    Accel_X_RAW = (int16_t)(data[0] << 8 | data[1]);
+    Accel_Y_RAW = (int16_t)(data[2] << 8 | data[3]);
+    Accel_Z_RAW = (int16_t)(data[4] << 8 | data[5]);
 
-    float accAngle = atan2f(ax_raw, az_raw) * 180.0f / 3.1415926f;
-    float gyroRate = (gx_raw - gyroBias) / 131.0f; // degrees/sec
+    Ax = Accel_X_RAW / 16384.0f;
+    Ay = Accel_Y_RAW / 16384.0f;
+    Az = Accel_Z_RAW / 16384.0f;
+}
 
-    // Complementary filter
-    angle = 0.98f * (angle + gyroRate * dt) + 0.02f * accAngle;
+void readGyroRaw(void)
+{
+    uint8_t data[6];
+    I2C_ReadBurst(MPU6050_ADDR, GYRO_XOUT_H, data, 6);
 
-    return angle;
+    Gyro_X_RAW = (int16_t)(data[0] << 8 | data[1]);
+    Gyro_Y_RAW = (int16_t)(data[2] << 8 | data[3]);
+    Gyro_Z_RAW = (int16_t)(data[4] << 8 | data[5]);
+
+    Gx = Gyro_X_RAW / 131.0f;
+    Gy = Gyro_Y_RAW / 131.0f;
+    Gz = Gyro_Z_RAW / 131.0f;
+}
+
+void testIMU(void)
+{
+    initIMU();
+    initLED();
+
+    uint8_t whoami = I2C_Read(MPU6050_ADDR, WHO_AM_I_REG);
+    if (whoami != 0x68)
+    {
+        while (1)
+        {
+            toggleLED();
+            volatile int i;
+            for (i = 0; i < 100000; i++)
+                ;
+        }
+    }
+
+    while (1)
+    {
+        readAccelRaw();
+        readGyroRaw();
+
+        toggleLED();
+        volatile int d;
+        for (d = 0; d < 200000; d++)
+            ;
+    }
 }
