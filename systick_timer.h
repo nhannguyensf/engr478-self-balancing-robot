@@ -7,5 +7,6 @@
 extern volatile uint32_t msTicks; // Global time counter
 
 void SysTick_Init(uint32_t Reload);
+void delay(uint32_t T);
 
 #endif

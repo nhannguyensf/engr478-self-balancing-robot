@@ -1,19 +1,22 @@
-// main.c - IMU test application using register-level I2C
+// main.c - Self-balancing robot entry point
 #include "stm32l476xx.h"
+#include "systick_timer.h"
 #include "i2c.h"
 #include "imu.h"
-#include "systick_timer.h"
+#include "motor.h"
 #include "led.h"
+#include "self_balance.h"
 
 int main(void)
 {
-    initLED();          // LED for activity feedback
-    initI2C1();         // Setup I2C1 on PB8/PB9
-    SysTick_Init(4000); // 1ms system tick for 4MHz core
-		
-    testIMU();          // Start IMU read loop
+    initLED();
+    SysTick_Init(4000); // 1ms tick assuming 4 MHz
+    initI2C1();
+    initMotors();
+    initIMU();
 
-    // Should never reach here
     while (1)
-        ;
+    {
+        balanceLoop(); // Main control loop
+    }
 }
