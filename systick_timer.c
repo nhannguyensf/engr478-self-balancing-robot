@@ -1,39 +1,35 @@
-// systick_timer.c - SysTick timer setup based on default 4 MHz clock
+// systick_timer.c - SysTick timer setup with interrupt-based control
 #include "stm32l476xx.h"
 #include "systick_timer.h"
 
-volatile uint32_t msTicks = 0; // Global time counter
+#define SystemCoreClock 4000000 // Manually define system clock as 4 MHz
 
-void SysTick_Init(uint32_t Reload)
+volatile uint32_t msTicks = 0; // Global time counter (increments every SysTick interrupt)
+
+// Initialize SysTick Timer for periodic interrupts
+// ticks_per_sec: Number of desired SysTick interrupts per second
+void SysTick_Init(uint32_t ticks_per_sec)
 {
-    // 1. Disable SysTick
-    SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;
-
-    // 2. Set reload value (Reload must be -1 because SysTick counts down to 0)
-    SysTick->LOAD = Reload - 1;
-
-    // 3. Clear current value
-    SysTick->VAL = 0;
-
-    // 4. Enable SysTick interrupt
-    SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
-
-    // 5. Select processor clock
-    SysTick->CTRL |= SysTick_CTRL_CLKSOURCE_Msk;
-
-    // 6. Enable SysTick
-    SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
+    SysTick->LOAD = (SystemCoreClock / ticks_per_sec) - 1; // Set reload value for desired frequency
+    SysTick->VAL = 0;                                      // Clear current SysTick counter value
+    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk             // Use processor clock (AHB)
+                    | SysTick_CTRL_TICKINT_Msk             // Enable SysTick interrupt
+                    | SysTick_CTRL_ENABLE_Msk;             // Enable SysTick timer
 }
 
-// SysTick Interrupt Handler
+// SysTick Interrupt Handler (called at configured frequency)
+// Directly calls balance control loop to maintain real-time control
 void SysTick_Handler(void)
 {
-    msTicks++; // Increment 1 every interrupt
+    balanceLoop(); // Execute self-balancing control loop
+    msTicks++;     // Increment global millisecond counter
 }
 
+// Crude delay function (blocking delay)
+// T: Desired delay time in milliseconds
 void delay(uint32_t T)
 {
     volatile uint32_t i;
     for (i = 0; i < T * 4000; i++)
-        ; // crude delay for 4MHz
+        ; // Approximate delay loop for 4 MHz clock
 }
