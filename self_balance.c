@@ -7,7 +7,7 @@
 #include <math.h>
 
 // PID constants - adjust for tuning robot stability
-static float Kp = 1.0f;
+static float Kp = 0.8f;
 static float Ki = 0.0f;
 static float Kd = 0.0f;
 
@@ -29,7 +29,7 @@ void balanceLoop(void)
     // Estimate pitch using a simple complementary filter
     float acc_angle = atan2f(imu_data.acc_y, imu_data.acc_z) * 180.0f / 3.14159265f;
     static float angle = 0.0f;
-    angle = 0.98f * (angle + imu_data.gyro_x * 0.01f) + 0.02f * acc_angle; // 0.01s loop time assumed
+    angle = 0.70f * (angle + imu_data.gyro_x * 0.01f) + 0.30f * acc_angle;
     pitch = angle;
 
     // PID control calculations
