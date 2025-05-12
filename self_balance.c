@@ -6,7 +6,7 @@
 
 // PID Constants (Adjust These for Stability)
 static float Kp = 4.5f;
-static float Ki = 0.02f;
+static float Ki = 0.015f;
 static float Kd = 1.0f;
 
 // PID State Variables
@@ -18,7 +18,7 @@ static float integral = 0.0f;
 
 // Gyro Bias Variable (Calculated Once at Startup)
 static float gyro_x_bias = 0.0f;
-static float pitch_offset = 0.0f; // measured “upright” angle
+static float pitch_offset = 2.0f; // measured “upright” angle
 
 // ------------------------------------------------------------
 // Calibrate Gyroscope Bias (Call This After initIMU())
