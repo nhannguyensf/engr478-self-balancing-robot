@@ -44,5 +44,11 @@ void TIM6_DAC_IRQHandler(void)
         {
             balanceLoop();
         }
+        else
+        {
+            // if paused, ensure motors are stopped
+            driveMotorLeft(0);
+            driveMotorRight(0);
+        }
     }
 }
