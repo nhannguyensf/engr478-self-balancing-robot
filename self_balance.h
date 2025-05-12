@@ -1,7 +1,12 @@
-// self_balance.h - Header for self-balancing control
-#ifndef SELF_BALANCE_H
-#define SELF_BALANCE_H
+#ifndef __SELF_BALANCE_H
+#define __SELF_BALANCE_H
 
+// ------------------------------------------------------------
+// Self-Balancing Robot Control Header
+// ------------------------------------------------------------
+
+// Main control loop function to keep the robot balanced.
+// This should be called at a fixed interval (e.g., 200 Hz using TIM6 interrupt).
 void balanceLoop(void);
 
-#endif // SELF_BALANCE_H
+#endif // __SELF_BALANCE_H

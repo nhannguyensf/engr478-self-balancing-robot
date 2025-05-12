@@ -1,16 +1,16 @@
-#ifndef SYSTICK_TIMER_H
-#define SYSTICK_TIMER_H
+#ifndef __SYSTICK_TIMER_H
+#define __SYSTICK_TIMER_H
 
 #include <stdint.h>
 
-// Initialize SysTick timer for periodic interrupts
-// ticks_per_sec: Number of desired SysTick interrupts per second (e.g., 1000 for 1ms resolution)
+// Initializes SysTick timer for periodic interrupts
+// ticks_per_sec: Frequency of SysTick interrupts (e.g., 1000 for 1 ms tick)
 void SysTick_Init(uint32_t ticks_per_sec);
 
-// Accurate non-blocking delay in milliseconds
+// Non-blocking delay function using SysTick counter
+// T: Delay in milliseconds
 void delay_ms(uint32_t T);
 
-// Global millisecond counter (updated by SysTick_Handler)
-extern volatile uint32_t msTicks;
+extern volatile uint32_t msTicks; // Global time counter (increments every millisecond)
 
-#endif // SYSTICK_TIMER_H
+#endif // __SYSTICK_TIMER_H

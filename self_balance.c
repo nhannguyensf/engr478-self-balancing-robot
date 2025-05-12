@@ -1,46 +1,77 @@
-// self_balance.c - Core control loop for self-balancing robot
-
 #include "self_balance.h"
 #include "imu.h"
 #include "motor.h"
 #include "systick_timer.h"
 #include <math.h>
 
-// PID constants - adjust for tuning robot stability
-static float Kp = 0.8f;
-static float Ki = 0.0f;
-static float Kd = 0.0f;
+// PID Constants (Adjust These for Stability)
+static float Kp = 4.0f;
+static float Ki = 0.02f;
+static float Kd = 0.8f;
 
-// PID control variables
+// PID State Variables
 static float prev_error = 0.0f;
 static float integral = 0.0f;
 
-// #define STABLE_ZONE_ANGLE 80.0f     // Degrees, robot doesn't react within this range
-// #define FALL_THRESHOLD_ANGLE 150.0f // Degrees, robot stops if pitch exceeds this value
+// Control Loop Time Step
+#define DT 0.005f
 
-// Main balance control loop, called from SysTick interrupt
+// Gyro Bias Variable (Calculated Once at Startup)
+static float gyro_x_bias = 0.0f;
+
+// ------------------------------------------------------------
+// Calibrate Gyroscope Bias (Call This After initIMU())
+// ------------------------------------------------------------
+void calibrateGyro(void)
+{
+    int samples = 500;
+    float sum = 0.0f;
+
+    int i;
+    for (i = 0; i < samples; i++)
+    {
+        readIMU_AllRaw();
+        sum += imu_data.gyro_x;
+        // delay_ms(2);
+    }
+
+    gyro_x_bias = sum / samples;
+}
+
+// ------------------------------------------------------------
+// Balance Control Loop (Called at 200 Hz from TIM6 ISR)
+// ------------------------------------------------------------
 void balanceLoop(void)
 {
     float error, derivative, output;
-    float pitch; // Estimated tilt angle (degrees)
+    float pitch;
 
-    readIMU_AllRaw(); // Read current IMU sensor values
+    // 1. Read IMU Data
+    readIMU_AllRaw();
 
-    // Estimate pitch using a simple complementary filter
-    float acc_angle = atan2f(imu_data.acc_y, imu_data.acc_z) * 180.0f / 3.14159265f;
+    // 2. Estimate Pitch Angle Using Complementary Filter
+    float acc_angle = atan2f(imu_data.acc_y, imu_data.acc_z) * (180.0f / 3.14159265f);
     static float angle = 0.0f;
-    angle = 0.70f * (angle + imu_data.gyro_x * 0.01f) + 0.30f * acc_angle;
+
+    // Compensate Gyro Bias and Apply Complementary Filter
+    float gyro_x_corrected = imu_data.gyro_x - gyro_x_bias;
+    angle = 0.98f * (angle + gyro_x_corrected * DT) + 0.02f * acc_angle;
     pitch = angle;
 
-    // PID control calculations
-    error = pitch;
-    integral += error * 0.01f;                             // Integrate over time
-    derivative = (error - prev_error) / 0.01f;             // Rate of change of error
-    output = Kp * error + Ki * integral + Kd * derivative; // PID output
+    // 3. PID Calculations
+    error = pitch; // Target pitch is 0 degrees (upright)
+    integral += error * DT;
+    derivative = (error - prev_error) / DT;
+    output = Kp * error + Ki * integral + Kd * derivative;
     prev_error = error;
 
-    // Control motors based on PID output
-    float pwm = output;
-    driveMotor(MOTOR_LEFT, -pwm);
-    driveMotor(MOTOR_RIGHT, -pwm);
+    // 4. Limit Output to Motor Control Range (-1000 to 1000)
+    if (output > 1000)
+        output = 1000;
+    if (output < -1000)
+        output = -1000;
+
+    // 5. Control Motors to Correct Balance
+    driveMotorLeft(-output);
+    driveMotorRight(-output);
 }

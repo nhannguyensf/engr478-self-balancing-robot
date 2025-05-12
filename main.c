@@ -1,5 +1,3 @@
-// main.c - Self-balancing robot entry point using SysTick Interrupt Control
-
 #include "stm32l476xx.h"
 #include "systick_timer.h"
 #include "i2c.h"
@@ -7,22 +5,28 @@
 #include "motor.h"
 #include "led.h"
 #include "self_balance.h"
+#include "tim6_balance.h" // Include TIM6 control
 
 int main(void)
 {
-    // Initialize system peripherals
-    initLED();    // Optional: LED for debugging/status
-    initI2C1();   // Initialize I2C for IMU communication
-    initMotors(); // Configure PWM and direction control for motors
-    initIMU();    // Wake up and configure MPU6050 IMU
+    // 1. Initialize Peripherals
+    initLED();
+    initI2C1();
+    initMotors();
+    initIMU();
 
-    // Initialize SysTick to trigger balanceLoop at 200 Hz (5ms intervals)
-    SysTick_Init(200);
+    // 2. Calibrate Gyroscope Bias (Important for angle stability)
+    calibrateGyro();
 
+    // 3. Initialize SysTick for delay_ms() functionality
+    SysTick_Init(1000); // 1 ms tick resolution
+
+    // 4. Start TIM6 to trigger balanceLoop at desired frequency (e.g., 200 Hz)
+    TIM6_Init(200); // 200 Hz control loop frequency
+
+    // 5. Main loop enters low-power mode, control handled in interrupts
     while (1)
     {
-        // Main loop intentionally left empty
-        // Balance control is executed inside SysTick_Handler interrupt
-        __WFI(); // Enter low-power mode until next interrupt
+        __WFI(); // Wait for Interrupt to minimize CPU usage
     }
 }
