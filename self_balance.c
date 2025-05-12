@@ -5,9 +5,9 @@
 #include <math.h>
 
 // PID Constants (Adjust These for Stability)
-static float Kp = 4.0f;
+static float Kp = 4.5f;
 static float Ki = 0.02f;
-static float Kd = 0.8f;
+static float Kd = 1.0f;
 
 // PID State Variables
 static float prev_error = 0.0f;
