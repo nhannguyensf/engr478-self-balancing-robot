@@ -18,6 +18,7 @@ static float integral = 0.0f;
 
 // Gyro Bias Variable (Calculated Once at Startup)
 static float gyro_x_bias = 0.0f;
+static float pitch_offset = 0.0f; // measured “upright” angle
 
 // ------------------------------------------------------------
 // Calibrate Gyroscope Bias (Call This After initIMU())
@@ -59,7 +60,7 @@ void balanceLoop(void)
     pitch = angle;
 
     // 3. PID Calculations
-    error = pitch; // Target pitch is 0 degrees (upright)
+    error = pitch - pitch_offset; // Target is the measured upright angle
     integral += error * DT;
     derivative = (error - prev_error) / DT;
     output = Kp * error + Ki * integral + Kd * derivative;
