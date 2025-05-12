@@ -1,16 +1,25 @@
-// motor.h - Header for Basic Motor PWM Control
-#ifndef MOTOR_H
-#define MOTOR_H
+#ifndef __MOTOR_H
+#define __MOTOR_H
 
-#define MOTOR_LEFT 0
-#define MOTOR_RIGHT 1
+#include <stdint.h>
 
+// ------------------------------------------------------------
+// Motor Control for Self-Balancing Robot
+// ------------------------------------------------------------
+
+// Initialize motor control peripherals (GPIO, PWM via TIM2)
 void initMotors(void);
-void driveMotor(int side, int speed);
-void forward(int speed);
-void backward(int speed);
-void turnLeft(int speed);
-void turnRight(int speed);
-void motorTest(void);
 
-#endif
+// Drive LEFT motor with speed value from -1000 to 1000
+// - Negative value: reverse direction
+// - Positive value: forward direction
+// - 0: Stop motor
+void driveMotorLeft(int speed);
+
+// Drive RIGHT motor with speed value from -1000 to 1000
+// - Negative value: reverse direction
+// - Positive value: forward direction
+// - 0: Stop motor
+void driveMotorRight(int speed);
+
+#endif // __MOTOR_H

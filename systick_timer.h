@@ -1,12 +1,16 @@
-// systick_timer.h - Header for SysTick timer utilities
-#ifndef SYSTICK_TIMER_H
-#define SYSTICK_TIMER_H
+#ifndef __SYSTICK_TIMER_H
+#define __SYSTICK_TIMER_H
 
 #include <stdint.h>
 
-extern volatile uint32_t msTicks; // Global time counter
+// Initializes SysTick timer for periodic interrupts
+// ticks_per_sec: Frequency of SysTick interrupts (e.g., 1000 for 1 ms tick)
+void SysTick_Init(uint32_t ticks_per_sec);
 
-void SysTick_Init(uint32_t Reload);
-void delay(uint32_t T);
+// Non-blocking delay function using SysTick counter
+// T: Delay in milliseconds
+void delay_ms(uint32_t T);
 
-#endif
+extern volatile uint32_t msTicks; // Global time counter (increments every millisecond)
+
+#endif // __SYSTICK_TIMER_H
