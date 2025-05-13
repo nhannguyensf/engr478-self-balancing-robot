@@ -31,6 +31,7 @@ int main(void)
 
     // 1. Init clocks & peripherals
     initLED();
+    onLED();
     initI2C1();
     initMotors();
     initIMU();
@@ -56,7 +57,8 @@ int main(void)
     const float base_Kd = Kd;
 
     i = 0; // buffer index
-
+    offLED();
+    
     // 7. Main idle/tuning loop
     while (1)
     {
