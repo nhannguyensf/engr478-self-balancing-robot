@@ -1,6 +1,5 @@
 #include "ADC.h"
 #include "LED.h"
-// #include "SysTimer.h"
 #include "stm32l476xx.h"
 #include <stdint.h>
 
@@ -200,4 +199,19 @@ void ADC1_2_IRQHandler(void)
         // It is cleared by software writing 1 to it.
         ADC1->ISR |= ADC_ISR_EOS;
     }
+}
+
+/// Single-conversion, blocking read of ADC1 (channel 5)
+uint16_t ADC_Read(void)
+{
+    // 1) Start software conversion
+    ADC1->CR |= ADC_CR_ADSTART;
+
+    // 2) Wait until end-of-conversion
+    while ((ADC1->ISR & ADC_ISR_EOC) == 0)
+    {
+    }
+
+    // 3) Read and return 12-bit result
+    return (uint16_t)(ADC1->DR & ADC_DR_RDATA);
 }

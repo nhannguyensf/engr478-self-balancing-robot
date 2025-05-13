@@ -1,78 +1,77 @@
+// self_balance.c
 #include "self_balance.h"
 #include "imu.h"
 #include "motor.h"
 #include "systick_timer.h"
 #include <math.h>
 
-// PID Constants (Adjust These for Stability)
-static float Kp = 4.5f;
-static float Ki = 0.015f;
-static float Kd = 1.0f;
+#ifndef M_PI
+/**
+ * @brief Pi constant if not defined in math.h
+ */
+#define M_PI 3.14159265358979323846f
+#endif
 
-// PID State Variables
+// PID Constants (externally tunable)
+float Kp = 4.5f;
+float Ki = 0.015f;
+float Kd = 1.0f;
+
+// PID State Variables (internal)
 static float prev_error = 0.0f;
 static float integral = 0.0f;
 
-// Control Loop Time Step
+// Sampling interval
 #define DT 0.005f
 
-// Gyro Bias Variable (Calculated Once at Startup)
+// Gyro bias (internal)
 static float gyro_x_bias = 0.0f;
-static float pitch_offset = 2.0f; // measured “upright” angle
 
-// ------------------------------------------------------------
-// Calibrate Gyroscope Bias (Call This After initIMU())
-// ------------------------------------------------------------
+// Upright angle offset (externally tunable)
+float pitch_offset = 2.0f;
+
 void calibrateGyro(void)
 {
     int samples = 500;
     float sum = 0.0f;
-
     int i;
     for (i = 0; i < samples; i++)
     {
         readIMU_AllRaw();
         sum += imu_data.gyro_x;
-        // delay_ms(2);
     }
-
     gyro_x_bias = sum / samples;
 }
 
-// ------------------------------------------------------------
-// Balance Control Loop (Called at 200 Hz from TIM6 ISR)
-// ------------------------------------------------------------
 void balanceLoop(void)
 {
     float error, derivative, output;
     float pitch;
 
-    // 1. Read IMU Data
+    // 1) Read IMU
     readIMU_AllRaw();
 
-    // 2. Estimate Pitch Angle Using Complementary Filter
-    float acc_angle = atan2f(imu_data.acc_y, imu_data.acc_z) * (180.0f / 3.14159265f);
+    // 2) Complementary filter for pitch angle
+    float acc_angle = atan2f(imu_data.acc_y, imu_data.acc_z) * (180.0f / M_PI);
     static float angle = 0.0f;
-
-    // Compensate Gyro Bias and Apply Complementary Filter
-    float gyro_x_corrected = imu_data.gyro_x - gyro_x_bias;
-    angle = 0.98f * (angle + gyro_x_corrected * DT) + 0.02f * acc_angle;
+    float gyro_corr = imu_data.gyro_x - gyro_x_bias;
+    angle = 0.98f * (angle + gyro_corr * DT) + 0.02f * acc_angle;
     pitch = angle;
 
-    // 3. PID Calculations
-    error = pitch - pitch_offset; // Target is the measured upright angle
+    // 3) PID with externally set Kp, Ki, Kd and offset
+    error = pitch - pitch_offset;
     integral += error * DT;
     derivative = (error - prev_error) / DT;
     output = Kp * error + Ki * integral + Kd * derivative;
     prev_error = error;
 
-    // 4. Limit Output to Motor Control Range (-1000 to 1000)
+    // 4) Limit output
     if (output > 1000)
         output = 1000;
     if (output < -1000)
         output = -1000;
 
-    // 5. Control Motors to Correct Balance
+    // 5) Drive motors
     driveMotorLeft(-output);
     driveMotorRight(-output);
 }
