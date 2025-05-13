@@ -64,13 +64,18 @@ int main(void)
         {
             // -- raw reading for LED feedback and logging --
             uint16_t raw = ADC_Read();
-            if (raw > 2048)
-                onLED();
-            else
-                offLED();
 
             result[(i++ & 0x00FF)] = raw;
             last_val = raw;
+
+            if (last_val > 2044 && last_val < 2052)
+            {
+                onLED();
+            }
+            else
+            {
+                offLED();
+            }
 
             // Future gain tuning: (uncomment each one if needed)
             // pitch_offset = base_offset + ADC_ReadFloat(OFFSET_DELTA_MIN, OFFSET_DELTA_MAX);
