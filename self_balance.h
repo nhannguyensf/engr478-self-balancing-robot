@@ -1,12 +1,23 @@
-#ifndef __SELF_BALANCE_H
-#define __SELF_BALANCE_H
+// self_balance.h
+#ifndef SELF_BALANCE_H
+#define SELF_BALANCE_H
 
-// ------------------------------------------------------------
-// Self-Balancing Robot Control Header
-// ------------------------------------------------------------
+#include <stdint.h>
 
-// Main control loop function to keep the robot balanced.
-// This should be called at a fixed interval (e.g., 200 Hz using TIM6 interrupt).
+/**
+ * @brief  Calibrate gyro bias and prepare complementary filter.
+ */
+void calibrateGyro(void);
+
+/**
+ * @brief  Run balance control loop (called by TIM6 ISR).
+ */
 void balanceLoop(void);
 
-#endif // __SELF_BALANCE_H
+// Tunable parameters (externally assignable)
+extern float Kp;
+extern float Ki;
+extern float Kd;
+extern float pitch_offset;
+
+#endif // SELF_BALANCE_H
